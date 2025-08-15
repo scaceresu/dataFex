@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget, QPushButton, QLineEdit,
     QComboBox, QTableWidget, QVBoxLayout,
-    QHBoxLayout
+    QHBoxLayout, QFileDialog, QLabel,QTableWidgetItem
 )
 
 class FiltroUI(QWidget):
@@ -9,10 +9,19 @@ class FiltroUI(QWidget):
         super().__init__()
         self.setWindowTitle("Generando una nueva Tabla")
         self.resize(700, 400)
+        self.ruta_archivo = None  # Aquí se guarda la ruta elegida
         self.init_ui()
 
     def init_ui(self):
         self.layout = QVBoxLayout()
+
+        # --- Selección de archivo ---
+        self.file_layout = QHBoxLayout()
+        self.btn_elegir_archivo = QPushButton("Elegir archivo")
+        self.label_archivo = QLabel("Ningún archivo seleccionado")
+        self.file_layout.addWidget(self.btn_elegir_archivo)
+        self.file_layout.addWidget(self.label_archivo)
+        self.layout.addLayout(self.file_layout)
 
         # Botón agregar filtros
         self.btn_agregar_filtro = QPushButton("Agregar filtros")
@@ -58,3 +67,18 @@ class FiltroUI(QWidget):
         self.layout.addWidget(self.btn_ejecutar)
 
         self.setLayout(self.layout)
+        
+    def create_table_item(self, text):
+        """Crea un item de tabla con el texto dado."""
+        return QTableWidgetItem(str(text))
+
+    def elegir_archivo(self):
+        ruta, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleccionar archivo Excel",
+            "",
+            "Archivos Excel (*.xls *.xlsx)"
+        )
+        if ruta:
+            self.ruta_archivo = ruta
+            self.label_archivo.setText(ruta.split("/")[-1])  # Mostrar solo el nombre

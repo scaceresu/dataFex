@@ -1,6 +1,8 @@
 # Entorno virtual
 venv/
 
+src/static/
+
 # Archivos de Python compilados
 __pycache__/
 *.pyc
