@@ -39,14 +39,15 @@ def aplicar_filtros_desde_qtable(table: QTableWidget, df: pd.DataFrame) -> pd.Da
 
     df = df.copy()
     df["FEX_2022"] = mask
-    df["FEX_2022"] = mask.astype(int)
+    df["fex_int"] = mask.astype(int)
     return df
 
-def calcular_resultados(df, tabla_filtros, columna_departamento="DPTO"):
+def calcular_resultados(df, tabla_filtros, columna_departamento="DPTO", columna_fex="FEX_2022"):
     """
     df: DataFrame completo del Excel
     tabla_filtros: QTableWidget con los filtros ingresados
     columna_departamento: nombre de la columna de departamentos
+    columna_fex: nombre de la columna que contiene el FEX
     """
     mask = pd.Series(True, index=df.index)
     
@@ -79,23 +80,23 @@ def calcular_resultados(df, tabla_filtros, columna_departamento="DPTO"):
         except Exception as e:
             print(f"No se pudo aplicar filtro {col} {cond} {val}: {e}")
 
-    # Crear columna fex
-    df = df.copy()
-    df["FEX_2022"] = mask
-    df["fex_int"] = mask.astype(int)
-
-    # Agrupar por departamento
-    grouped = df.groupby(columna_departamento).agg(
-        total=("FEX_2022", "size"),
-        matched=("fex_int", "sum")
+    # Filtrar solo las filas que cumplen los filtros
+    df_filtrado = df[mask].copy()
+    
+    # Agrupar por departamento sumando FEX
+    grouped = df_filtrado.groupby(columna_departamento).agg(
+        fex_total=(columna_fex, "sum")
     ).reset_index()
-    
+
     # Asegurarse de que haya filas para los departamentos 0–12
-    for d in range(13):
+    for d in range(14):
         if d not in grouped[columna_departamento].values:
-            grouped = pd.concat([grouped, pd.DataFrame({columna_departamento:[d], "total":[0], "matched":[0]})], ignore_index=True)
-    
+            grouped = pd.concat([grouped, pd.DataFrame({columna_departamento:[d], "fex_total":[0]})], ignore_index=True)
+
     grouped = grouped.sort_values(columna_departamento).reset_index(drop=True)
-    grouped["porcentaje"] = (grouped["matched"] / grouped["total"] * 100).fillna(0).round(2)
+
+    # Calcular porcentaje sobre el total de FEX de todos los departamentos
+    total_fex = grouped["fex_total"].sum()
+    grouped["porcentaje"] = ((grouped["fex_total"] / total_fex) * 100).fillna(0).round(2)
 
     return grouped
